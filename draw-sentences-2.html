@@ -23,58 +23,59 @@
 
     <script>
         function splitSentences(text) {
-      // This regex looks for sentence endings while ignoring common abbreviations and quotes
-      const sentenceRegex = /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s(?=[A-Z])/g;
-    
-    // Split the text, but keep the delimiters
-    const roughSentences = text.split(sentenceRegex);
-    
-    // Join sentences that are inside quotes
-    const sentences = [];
-    let insideQuotes = false;
-    let currentSentence = '';
+            // This regex looks for sentence endings while ignoring common abbreviations and quotes
+            const sentenceRegex = /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s(?=[A-Z])/g;
+            
+            // Split the text, but keep the delimiters
+            const roughSentences = text.split(sentenceRegex);
+            
+            // Join sentences that are inside quotes
+            const sentences = [];
+            let insideQuotes = false;
+            let currentSentence = '';
 
-    roughSentences.forEach(sentence => {
-        const quoteCount = (sentence.match(/"/g) || []).length;
-        
-        if (!insideQuotes) {
-            if (quoteCount % 2 === 0) {
-                // Even number of quotes, sentence is complete
-                sentences.push(currentSentence + sentence);
-                currentSentence = '';
-            } else {
-                // Odd number of quotes, sentence continues
-                insideQuotes = true;
-                currentSentence += sentence;
+            roughSentences.forEach(sentence => {
+                const quoteCount = (sentence.match(/"/g) || []).length;
+                
+                if (!insideQuotes) {
+                    if (quoteCount % 2 === 0) {
+                        // Even number of quotes, sentence is complete
+                        sentences.push(currentSentence + sentence);
+                        currentSentence = '';
+                    } else {
+                        // Odd number of quotes, sentence continues
+                        insideQuotes = true;
+                        currentSentence += sentence;
+                    }
+                } else {
+                    if (quoteCount % 2 === 1) {
+                        // Closing quote found, sentence is complete
+                        sentences.push(currentSentence + sentence);
+                        currentSentence = '';
+                        insideQuotes = false;
+                    } else {
+                        // Still inside quotes
+                        currentSentence += sentence;
+                    }
+                }
+            });
+
+            // Add any remaining sentence
+            if (currentSentence) {
+                sentences.push(currentSentence);
             }
-        } else {
-            if (quoteCount % 2 === 1) {
-                // Closing quote found, sentence is complete
-                sentences.push(currentSentence + sentence);
-                currentSentence = '';
-                insideQuotes = false;
-            } else {
-                // Still inside quotes
-                currentSentence += sentence;
-            }
+
+            return sentences.filter(s => s.trim() !== '');
         }
-    });
+        
+        function analyzeSentences() {
+            const text = document.getElementById('inputText').value;
+            const sentences = splitSentences(text);
+            const sentenceLengths = sentences.map(sentence => sentence.trim().split(/\s+/).length);
+        
+            drawGraph(sentenceLengths);
+        }
 
-    // Add any remaining sentence
-    if (currentSentence) {
-        sentences.push(currentSentence);
-    }
-
-    return sentences.filter(s => s.trim() !== '');
-            }
-            
-                function analyzeSentences() {
-                const text = document.getElementById('inputText').value;
-                const sentences = splitSentences(text);
-                const sentenceLengths = sentences.map(sentence => sentence.trim().split(/\s+/).length);
-            
-                drawGraph(sentenceLengths);
-            }
         function drawGraph(data) {
             const canvas = document.getElementById('graphCanvas');
             const ctx = canvas.getContext('2d');
