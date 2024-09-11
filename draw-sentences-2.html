@@ -23,49 +23,30 @@
 
     <script>
         function splitSentences(text) {
-            // This regex looks for sentence endings while ignoring common abbreviations and quotes
-            const sentenceRegex = /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s(?=[A-Z])/g;
-            
-            // Split the text, but keep the delimiters
-            const roughSentences = text.split(sentenceRegex);
-            
-            // Join sentences that are inside quotes
-            const sentences = [];
-            let insideQuotes = false;
-            let currentSentence = '';
+            // Replace common abbreviations with placeholders
+            const abbreviations = {
+                'Mr.': 'Mr@', 'Mrs.': 'Mrs@', 'Ms.': 'Ms@', 'Dr.': 'Dr@',
+                'Prof.': 'Prof@', 'Rev.': 'Rev@', 'Gen.': 'Gen@', 'Col.': 'Col@',
+                'Sgt.': 'Sgt@', 'Capt.': 'Capt@', 'Lt.': 'Lt@', 'St.': 'St@',
+                'Ave.': 'Ave@', 'Blvd.': 'Blvd@', 'Rd.': 'Rd@',
+                'e.g.': 'eg@', 'i.e.': 'ie@', 'etc.': 'etc@',
+                'vs.': 'vs@', 'Ph.D.': 'PhD@', 'U.S.': 'US@', 'U.K.': 'UK@'
+            };
 
-            roughSentences.forEach(sentence => {
-                const quoteCount = (sentence.match(/"/g) || []).length;
-                
-                if (!insideQuotes) {
-                    if (quoteCount % 2 === 0) {
-                        // Even number of quotes, sentence is complete
-                        sentences.push(currentSentence + sentence);
-                        currentSentence = '';
-                    } else {
-                        // Odd number of quotes, sentence continues
-                        insideQuotes = true;
-                        currentSentence += sentence;
-                    }
-                } else {
-                    if (quoteCount % 2 === 1) {
-                        // Closing quote found, sentence is complete
-                        sentences.push(currentSentence + sentence);
-                        currentSentence = '';
-                        insideQuotes = false;
-                    } else {
-                        // Still inside quotes
-                        currentSentence += sentence;
-                    }
-                }
-            });
-
-            // Add any remaining sentence
-            if (currentSentence) {
-                sentences.push(currentSentence);
+            for (let [abbr, placeholder] of Object.entries(abbreviations)) {
+                text = text.replace(new RegExp('\\b' + abbr, 'g'), placeholder);
             }
 
-            return sentences.filter(s => s.trim() !== '');
+            // Split sentences
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+
+            // Restore abbreviations
+            return sentences.map(sentence => {
+                for (let [abbr, placeholder] of Object.entries(abbreviations)) {
+                    sentence = sentence.replace(new RegExp(placeholder, 'g'), abbr);
+                }
+                return sentence.trim();
+            });
         }
         
         function analyzeSentences() {
