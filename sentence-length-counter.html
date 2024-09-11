@@ -17,9 +17,96 @@
     <button onclick="analyzeSentences()">Analyze and Download CSV</button>
 
     <script>
+        function splitSentences(text) {
+            // Replace common abbreviations with placeholders
+            const abbreviations = {
+                // Titles and honorifics
+                'Mr.': 'Mr@', 'Mrs.': 'Mrs@', 'Ms.': 'Ms@', 'Dr.': 'Dr@',
+                'Prof.': 'Prof@', 'Rev.': 'Rev@', 'Hon.': 'Hon@', 'Pres.': 'Pres@',
+                'Gov.': 'Gov@', 'Ofc.': 'Ofc@', 'Msgr.': 'Msgr@', 'Sr.': 'Sr@', 'Jr.': 'Jr@',
+                'Esq.': 'Esq@', 'Rt. Hon.': 'RtHon@',
+
+                // Military ranks
+                'Gen.': 'Gen@', 'Col.': 'Col@', 'Maj.': 'Maj@', 'Capt.': 'Capt@',
+                'Lt.': 'Lt@', 'Sgt.': 'Sgt@', 'Cpl.': 'Cpl@', 'Pvt.': 'Pvt@',
+                'Adm.': 'Adm@', 'Cmdr.': 'Cmdr@', 'Brig.': 'Brig@',
+
+                // Streets and locations
+                'St.': 'St@', 'Ave.': 'Ave@', 'Blvd.': 'Blvd@', 'Rd.': 'Rd@',
+                'Hwy.': 'Hwy@', 'Pkwy.': 'Pkwy@', 'Cir.': 'Cir@', 'Ct.': 'Ct@',
+                'Ter.': 'Ter@', 'Pl.': 'Pl@', 'Dr.': 'Dr@', 'Ln.': 'Ln@', 'Fwy.': 'Fwy@',
+                'Mt.': 'Mt@', 'Ft.': 'Ft@',
+
+                // States and provinces
+                'Ala.': 'Ala@', 'Ariz.': 'Ariz@', 'Ark.': 'Ark@', 'Calif.': 'Calif@',
+                'Colo.': 'Colo@', 'Conn.': 'Conn@', 'Del.': 'Del@', 'Fla.': 'Fla@',
+                'Ga.': 'Ga@', 'Ill.': 'Ill@', 'Ind.': 'Ind@', 'Kan.': 'Kan@',
+                'Ky.': 'Ky@', 'La.': 'La@', 'Md.': 'Md@', 'Mass.': 'Mass@',
+                'Mich.': 'Mich@', 'Minn.': 'Minn@', 'Miss.': 'Miss@', 'Mo.': 'Mo@',
+                'Mont.': 'Mont@', 'Neb.': 'Neb@', 'Nev.': 'Nev@', 'N.H.': 'NH@',
+                'N.J.': 'NJ@', 'N.M.': 'NM@', 'N.Y.': 'NY@', 'N.C.': 'NC@',
+                'N.D.': 'ND@', 'Okla.': 'Okla@', 'Ore.': 'Ore@', 'Pa.': 'Pa@',
+                'R.I.': 'RI@', 'S.C.': 'SC@', 'S.D.': 'SD@', 'Tenn.': 'Tenn@',
+                'Tex.': 'Tex@', 'Vt.': 'Vt@', 'Va.': 'Va@', 'Wash.': 'Wash@',
+                'W.Va.': 'WVa@', 'Wis.': 'Wis@', 'Wyo.': 'Wyo@',
+
+                // Latin abbreviations
+                'e.g.': 'eg@', 'i.e.': 'ie@', 'etc.': 'etc@', 'vs.': 'vs@',
+                'et al.': 'etal@', 'c.': 'c@', 'ca.': 'ca@', 'cf.': 'cf@',
+                'et seq.': 'etseq@', 'al.': 'al@',
+
+                // Academic and professional
+                'Ph.D.': 'PhD@', 'M.D.': 'MD@', 'B.A.': 'BA@', 'M.A.': 'MA@',
+                'D.D.S.': 'DDS@', 'R.N.': 'RN@', 'M.B.A.': 'MBA@',
+                'B.S.': 'BS@', 'M.S.': 'MS@', 'LL.B.': 'LLB@', 'J.D.': 'JD@',
+
+                // Organizations and countries
+                'U.S.': 'US@', 'U.K.': 'UK@', 'E.U.': 'EU@', 'U.N.': 'UN@',
+                'NATO': 'NATO@', 'NAFTA': 'NAFTA@', 'NASA': 'NASA@',
+
+                // Time and measurements
+                'a.m.': 'am@', 'p.m.': 'pm@', 'A.M.': 'AM@', 'P.M.': 'PM@',
+                'ft.': 'ft@', 'sq.': 'sq@', 'hr.': 'hr@', 'min.': 'min@',
+                'sec.': 'sec@', 'yr.': 'yr@',
+
+                // Historical era abbreviations
+                'B.C.': 'BC@', 'A.D.': 'AD@', 'B.C.E.': 'BCE@', 'C.E.': 'CE@',
+                'fl.': 'fl@',
+
+                // Business and legal
+                'Inc.': 'Inc@', 'Ltd.': 'Ltd@', 'Corp.': 'Corp@', 'Co.': 'Co@',
+                'LLC': 'LLC@', 'v.': 'v@',
+
+                // Publishing and academic
+                'Fig.': 'Fig@', 'Vol.': 'Vol@', 'No.': 'No@', 'Op.': 'Op@',
+                'Dept.': 'Dept@', 'Univ.': 'Univ@', 'Assn.': 'Assn@',
+                'ed.': 'ed@', 'eds.': 'eds@', 'vol.': 'vol@', 'vols.': 'vols@',
+                'p.': 'p@', 'pp.': 'pp@', 'ch.': 'ch@', 'fig.': 'fig@', 'figs.': 'figs@',
+
+                // Miscellaneous
+                'Est.': 'Est@', 'N.B.': 'NB@', 'P.S.': 'PS@', 'Q.E.D.': 'QED@'
+            };
+
+            // Replace abbreviations with placeholders
+            for (let [abbr, placeholder] of Object.entries(abbreviations)) {
+                text = text.replace(new RegExp('\\b' + abbr, 'g'), placeholder);
+            }
+
+            // Split sentences
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+
+            // Restore abbreviations
+            return sentences.map(sentence => {
+                for (let [abbr, placeholder] of Object.entries(abbreviations)) {
+                    sentence = sentence.replace(new RegExp(placeholder, 'g'), abbr);
+                }
+                return sentence.trim();
+            });
+        }
+
         function analyzeSentences() {
             const text = document.getElementById('inputText').value;
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+            const sentences = splitSentences(text);
             const sentenceLengths = sentences.map(sentence => sentence.trim().split(/\s+/).length);
 
             let csvContent = "Sentence Number,Word Count\n";
